@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>채점 결과</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 상단 고정 헤더 -->
+        <header class="result-header">
+            <a href="{{ url_for('home') }}" class="back-button">← 메인으로</a>
+            <h1>{{ project.name }}</h1>
+        </header>
+
+        <!-- 탭 메뉴 -->
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('image-tab')">채점된 시험지</button>
+                <button class="tab-button" onclick="showTab('detail-tab')">상세 결과</button>
+            </div>
+
+            <!-- 시험지 이미지 탭 -->
+            <div id="image-tab" class="tab-content active">
+                <div class="swiper">
+                    <div class="swiper-wrapper">
+                        {% for image_path in image_paths %}
+                        <div class="swiper-slide">
+                            <a href="{{ url_for('static', filename='uploads/images/' + image_path) }}" 
+                               data-pswp-width="1500" 
+                               data-pswp-height="2000" 
+                               target="_blank">
+                                <img src="{{ url_for('static', filename='uploads/images/' + image_path) }}" 
+                                     alt="채점된 시험지 페이지 {{loop.index}}">
+                            </a>
+                            <div class="page-indicator">{{ loop.index }} / {{ image_paths|length }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+                </div>
+            </div>
+
+            <!-- 상세 결과 탭 -->
+            <div id="detail-tab" class="tab-content">
+                <div class="question-results">
+                    <!-- 총점 정보 카드 -->
+                    <div class="score-overview">
+                        <div class="score-main-card">
+                            <div class="score-circle-wrapper">
+                                <svg class="score-progress" viewBox="0 0 36 36">
+                                    <path d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        stroke="#eee"
+                                        stroke-width="3"
+                                    />
+                                    <path d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        stroke="#4a90e2"
+                                        stroke-width="3"
+                                        stroke-dasharray="{{ results.score }}, 100"
+                                    />
+                                </svg>
+                                <div class="score-percentage">
+                                    <span class="score-number">{{ results.score }}</span>
+                                    <span class="score-unit">점</span>
+                                </div>
+                            </div>
+                            <div class="score-stats">
+                                <div class="stat-container">
+                                    <div class="stat-box correct">
+                                        <div class="stat-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M20 6L9 17L4 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value">{{ results.correct_count }}</div>
+                                            <div class="stat-label">맞은 문항</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box total">
+                                        <div class="stat-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value">{{ results.total_questions }}</div>
+                                            <div class="stat-label">전체 문항</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 문항별 결과 -->
+                    <div class="results-grid">
+                        {% for detail in results.details %}
+                        <div class="result-card {{ 'correct' if detail.is_correct else 'incorrect' }}">
+                            <div class="question-header">
+                                <span class="question-number">문항 {{ detail.question_num }}</span>
+                                <span class="result-badge {{ 'correct' if detail.is_correct else 'incorrect' }}">
+                                    {{ '정답' if detail.is_correct else '오답' }}
+                                </span>
+                            </div>
+                            <div class="answer-comparison">
+                                <div class="answer-item">
+                                    <span class="answer-label">정답</span>
+                                    <span class="answer-value correct">{{ detail.correct_answer }}</span>
+                                </div>
+                                <div class="answer-item">
+                                    <span class="answer-label">제출</span>
+                                    <span class="answer-value {{ 'correct' if detail.is_correct else 'incorrect' }}">
+                                        {{ detail.student_answer }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe-lightbox.umd.min.js"></script>
+
+    <script>
+        // Swiper 초기화
+        const swiper = new Swiper('.swiper', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            slidesPerGroup: 1,
+            allowTouchMove: true,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
+
+        // PhotoSwipe 초기화
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '.swiper',
+            children: 'a',
+            pswpModule: PhotoSwipe
+        });
+        lightbox.init();
+
+        // 탭 전환 함수
+        function showTab(tabId) {
+            // 모든 탭 컨텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 선택된 탭 보이기
+            document.getElementById(tabId).classList.add('active');
+            // 선택된 탭 버튼 활성화
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html> 
